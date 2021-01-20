@@ -4,51 +4,22 @@ using UnityEditor.UIElements;
 
 public class ThirdPersonCamera : MonoBehaviour
 {
-    public bool lockCursor;
-    public float mouseSensitivity = 10;
-    public Transform target;
-    public float dstFromTarget = 2;
-    public Vector2 pitchMinMax = new Vector2(-40, 85); //Setting a min and max camera rotation clamp
+    public Transform player;
 
-    public float minFov = 40f;
-    public float maxFov = 80f;
-    public float sensitivity = 100f;
+    private Vector3 cameraOffset;
 
-    public float rotationSmoothTime = .12f;
-    Vector3 rotationSmoothVelocity;
-    Vector3 currentRotation;
+    [Range(0.01f, 1.0f)]
+    public float SmoothFactor = 0.5f;
 
-    float yaw;
-    float pitch;
-
-    void Start()
+    private void Start()
     {
-        if (lockCursor)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
+        cameraOffset = transform.position - player.position;
     }
 
-    void Update()
+    private void LateUpdate()
     {
-        float fov = Camera.main.fieldOfView;
+        Vector3 newPos = player.position + cameraOffset;
 
-        fov -= Input.GetAxis("Mouse ScrollWheel") * sensitivity;
-        fov = Mathf.Clamp(fov, minFov, maxFov);
-        Camera.main.fieldOfView = fov;
-    }
-
-    void LateUpdate()
-    {
-        yaw += Input.GetAxis("Mouse X") * mouseSensitivity; //Move camera yaw based on mouse
-        pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity; //Move camera pitch based on mouse
-        pitch = Mathf.Clamp(pitch, pitchMinMax.x, pitchMinMax.y); //Applying a clamp with the pitch variables
-
-        currentRotation = Vector3.SmoothDamp(currentRotation, new Vector3(pitch, yaw), ref rotationSmoothVelocity, rotationSmoothTime);
-        transform.eulerAngles = currentRotation;
-
-        transform.position = target.position - transform.forward * dstFromTarget;
+        transform.position = Vector3.Slerp(transform.position, newPos, SmoothFactor);
     }
 }
-
